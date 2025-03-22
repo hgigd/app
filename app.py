@@ -65,5 +65,5 @@ def resize_image(input_path, output_path, size):
         img.save(output_path)
 
 if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 5000))  # Use the PORT environment variable or default to 5000
-    app.run(host='0.0.0.0', port=port, debug=True)  # Bind to 0.0.0.0 
+    port = int(os.environ.get("PORT", 10000))  # Use the PORT environment variable or default to 10000
+    app.run(host='0.0.0.0', port=port, debug=False)  # Bind to 0.0.0.0 
