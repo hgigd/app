@@ -1,7 +1,10 @@
 from flask import Flask, request, render_template, send_file
 from PIL import Image
 import os
+import io
 from remove_background import remove_background  # Import the new function
+import threading
+import time
 
 app = Flask(__name__)
 
@@ -24,25 +27,37 @@ def convert_image():
     # Get the selected output format
     output_format = request.form.get('format', 'png').lower()  # Ensure it's lowercase
 
-    # Save the uploaded file
-    file_path = os.path.join(UPLOAD_FOLDER, file.filename)
-    file.save(file_path)
-
-    # Convert the image to the desired format
-    output_filename = f"{os.path.splitext(file.filename)[0]}.{output_format}"
-    output_path = os.path.join(UPLOAD_FOLDER, output_filename)
-
     # Use a context manager to open the image
-    with Image.open(file_path) as img:
+    with Image.open(file) as img:
         img.thumbnail((800, 800))  # Resize to a maximum of 800x800 while maintaining aspect ratio
-        img.convert('RGB').save(output_path, format=output_format.upper())  # Save in the desired format
+        
+        # Create an in-memory bytes buffer
+        img_byte_arr = io.BytesIO()
+        img.convert('RGB').save(img_byte_arr, format=output_format.upper())  # Save in the desired format
+        img_byte_arr.seek(0)  # Move to the beginning of the BytesIO buffer
 
-    return send_file(output_path, as_attachment=True)
+    return send_file(img_byte_arr, as_attachment=True, download_name=f"converted_image.{output_format}")
+
+def delete_all_files(folder_path):
+    # Wait for 1 minute before deleting
+    time.sleep(60)
+    try:
+        for filename in os.listdir(folder_path):
+            file_path = os.path.join(folder_path, filename)
+            if os.path.isfile(file_path):
+                os.remove(file_path)
+                print(f"Deleted file: {file_path}")
+    except Exception as e:
+        print(f"Error deleting files: {e}")
 
 @app.route('/remove-background', methods=['POST'])
 def remove_bg():
     file = request.files['file']
-    return remove_background(file)  # Call the function from the new file
+    filename = file.filename
+    if filename == '':
+        return "No selected file", 400
+    
+    return remove_background(file, filename)  # Pass the file object and filename
 
 def resize_image(input_path, output_path, size):
     with Image.open(input_path) as img:
