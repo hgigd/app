@@ -32,7 +32,9 @@ def convert_image():
     output_filename = f"{os.path.splitext(file.filename)[0]}.{output_format}"
     output_path = os.path.join(UPLOAD_FOLDER, output_filename)
 
+    # Use a context manager to open the image
     with Image.open(file_path) as img:
+        img.thumbnail((800, 800))  # Resize to a maximum of 800x800 while maintaining aspect ratio
         img.convert('RGB').save(output_path, format=output_format.upper())  # Save in the desired format
 
     return send_file(output_path, as_attachment=True)
@@ -48,4 +50,5 @@ def resize_image(input_path, output_path, size):
         img.save(output_path)
 
 if __name__ == '__main__':
-    app.run(debug=True) 
+    port = int(os.environ.get("PORT", 5000))  # Use the PORT environment variable or default to 5000
+    app.run(host='0.0.0.0', port=port, debug=True)  # Bind to 0.0.0.0 
