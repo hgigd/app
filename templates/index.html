@@ -4,37 +4,60 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Image Converter</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f0f0f0;
-            color: #333;
+            font-family: 'Roboto', sans-serif;
+            background-color: #f4f4f4; /* Light mode background */
+            color: #333; /* Light mode text color */
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
-            height: 100vh;
             margin: 0;
+            padding: 20px;
+            transition: background-color 0.3s, color 0.3s; /* Smooth transition */
+            position: relative; /* For absolute positioning of the button */
+        }
+        body.dark-mode {
+            background-color: #121212; /* Dark mode background */
+            color: #ffffff; /* Dark mode text color */
         }
         h1 {
             color: #4CAF50;
+            margin-bottom: 20px;
+            text-align: center;
         }
-        form {
-            background-color: white;
+        .form-container {
+            background-color: white; /* Light mode form background */
             padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            width: 300px; /* Set a width for the form */
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 400px;
+            margin-bottom: 20px;
+            transition: box-shadow 0.3s, background-color 0.3s; /* Smooth transition */
         }
-        #drop-area {
+        body.dark-mode .form-container {
+            background-color: #1e1e1e; /* Dark mode form background */
+            box-shadow: 0 4px 20px rgba(255, 255, 255, 0.1); /* Dark mode shadow */
+        }
+        #drop-area, #drop-area-bg {
             border: 2px dashed #4CAF50;
-            border-radius: 8px;
+            border-radius: 10px;
             padding: 20px;
             text-align: center;
             margin-bottom: 10px;
             cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        #drop-area:hover, #drop-area-bg:hover {
+            background-color: #e8f5e9;
+        }
+        body.dark-mode #drop-area:hover, body.dark-mode #drop-area-bg:hover {
+            background-color: #2e2e2e; /* Dark mode hover effect */
         }
         input[type="file"] {
-            display: none; /* Hide the default file input */
+            display: none;
         }
         button {
             background-color: #4CAF50;
@@ -43,34 +66,79 @@
             padding: 10px 15px;
             border-radius: 5px;
             cursor: pointer;
-            transition: background-color 0.3s;
+            transition: background-color 0.3s, transform 0.2s;
             width: 100%;
+            font-size: 16px;
         }
         button:hover {
+            background-color: #45a049;
+            transform: scale(1.05);
+        }
+        label {
+            margin-top: 10px;
+            display: block;
+            font-weight: bold;
+        }
+        select {
+            width: 100%;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            margin-top: 10px;
+        }
+        .toggle-button {
+            position: fixed; /* Fixed positioning */
+            top: 20px; /* Distance from the top */
+            right: 10px; /* Distance from the right */
+            padding: 5px 10px; /* Smaller padding */
+            border: none;
+            border-radius: 5px;
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            z-index: 1000; /* Ensure it is above other elements */
+            font-size: 12px; /* Smaller font size */
+        }
+        .toggle-button:hover {
             background-color: #45a049;
         }
     </style>
 </head>
 <body>
+    <button class="toggle-button" id="theme-toggle">Toggle Dark Mode</button>
     <h1>Image Converter</h1>
-    <form action="/convert" method="post" enctype="multipart/form-data">
-        <div id="drop-area">
-            <p>Drag and drop files here or click to select</p>
-            <input type="file" name="file" accept="image/*" required id="fileElem">
-        </div>
-        <label for="format">Select output format:</label>
-        <select name="format" id="format" required>
-            <option value="png">PNG</option>
-            <option value="jpeg">JPEG</option>
-            <option value="bmp">BMP</option>
-            <option value="gif">GIF</option>
-            <option value="pdf">PDF</option>
-        </select>
-        <button type="submit">Convert</button>
-    </form>
+    <div class="form-container">
+        <form action="/convert" method="post" enctype="multipart/form-data">
+            <div id="drop-area">
+                <p>Drag and drop files here or click to select</p>
+                <input type="file" name="file" accept="image/*" required id="fileElem">
+            </div>
+            <label for="format">Select output format:</label>
+            <select name="format" id="format" required>
+                <option value="png">PNG</option>
+                <option value="jpeg">JPEG</option>
+                <option value="bmp">BMP</option>
+                <option value="gif">GIF</option>
+                <option value="pdf">PDF</option>
+            </select>
+            <button type="submit">Convert</button>
+        </form>
+    </div>
+
+    <h1>Remove Background</h1>
+    <div class="form-container">
+        <form action="/remove-background" method="post" enctype="multipart/form-data">
+            <div id="drop-area-bg">
+                <p>Drag and drop files here or click to select</p>
+                <input type="file" name="file" accept="image/*" required id="fileElemBg">
+            </div>
+            <button type="submit">Remove Background</button>
+        </form>
+    </div>
 
     <script>
-        // Drag and drop functionality
+        // Drag and drop functionality for the Convert form
         const dropArea = document.getElementById('drop-area');
         const fileInput = document.getElementById('fileElem');
 
@@ -95,6 +163,39 @@
                 fileInput.files = files; // Set the files to the input
                 dropArea.querySelector('p').textContent = files[0].name; // Show the file name
             }
+        });
+
+        // Drag and drop functionality for Remove Background
+        const dropAreaBg = document.getElementById('drop-area-bg');
+        const fileInputBg = document.getElementById('fileElemBg');
+
+        dropAreaBg.addEventListener('click', () => {
+            fileInputBg.click();
+        });
+
+        dropAreaBg.addEventListener('dragover', (event) => {
+            event.preventDefault();
+            dropAreaBg.classList.add('highlight');
+        });
+
+        dropAreaBg.addEventListener('dragleave', () => {
+            dropAreaBg.classList.remove('highlight');
+        });
+
+        dropAreaBg.addEventListener('drop', (event) => {
+            event.preventDefault();
+            dropAreaBg.classList.remove('highlight');
+            const files = event.dataTransfer.files;
+            if (files.length) {
+                fileInputBg.files = files; // Set the files to the input
+                dropAreaBg.querySelector('p').textContent = files[0].name; // Show the file name
+            }
+        });
+
+        // Dark mode toggle functionality
+        const themeToggle = document.getElementById('theme-toggle');
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
         });
     </script>
 </body>
